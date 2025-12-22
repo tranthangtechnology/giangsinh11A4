@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Giáng Sinh 11A4 - Special Show</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Roboto', sans-serif; }
+        #canvas-container { width: 100%; height: 100vh; display: block; }
+        
+        /* --- TIÊU ĐỀ CHÍNH --- */
+        .title {
+            position: absolute; top: 15px; width: 100%; text-align: center;
+            font-family: 'Great Vibes', cursive; 
+            font-size: clamp(2.5rem, 6vw, 4rem); /* Tự chỉnh cỡ chữ */
+            color: #fff;
+            text-shadow: 0 0 20px #ff0055, 0 0 40px #ff0055; 
+            z-index: 100; pointer-events: none;
+            padding: 0 10px; box-sizing: border-box;
+        }
+
+        /* --- CÁC NÚT ĐIỀU KHIỂN DƯỚI --- */
+        .button-container {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 100;
+            flex-wrap: wrap; justify-content: center; width: 95%; max-width: 800px;
+        }
+
+        .action-btn {
+            padding: 10px 15px; 
+            font-size: clamp(0.8rem, 2.5vw, 1rem); /* Nút nhỏ lại trên mobile */
+            color: white; border: none; border-radius: 50px; cursor: pointer;
+            font-family: 'Roboto', sans-serif; font-weight: bold;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5); transition: all 0.3s ease;
+            text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+            flex: 1 1 auto; /* Tự co giãn linh hoạt */
+            max-width: 200px;
+        }
+        .action-btn:hover { transform: scale(1.05); }
+
+        #open-all-btn { background: linear-gradient(45deg, #ff0055, #c0392b); box-shadow: 0 0 20px rgba(255, 0, 85, 0.6); }
+        #slideshow-btn { background: linear-gradient(45deg, #00b09b, #96c93d); box-shadow: 0 0 20px rgba(0, 176, 155, 0.6); }
+        #shuffle-btn { background: linear-gradient(45deg, #8e44ad, #9b59b6); box-shadow: 0 0 20px rgba(142, 68, 173, 0.6); }
+        #music-btn { background: linear-gradient(45deg, #f1c40f, #f39c12); box-shadow: 0 0 20px rgba(241, 196, 15, 0.6); color: #333; }
+
+        /* --- BẢNG CHÀO (WELCOME MODAL) - ĐÃ SỬA RESPONSIVE --- */
+        #welcome-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 3000; 
+            display: flex; justify-content: center; align-items: center;
+            padding: 15px; box-sizing: border-box; /* Khoảng cách an toàn */
+        }
+
+        .welcome-content {
+            text-align: center; 
+            border: 2px solid #ffd700; 
+            padding: 20px; 
+            border-radius: 20px; 
+            background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7)), url('a4.jpg');
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.6); 
+            
+            width: 100%; max-width: 650px; /* Giới hạn chiều rộng */
+            max-height: 90vh; /* Không cao quá màn hình */
+            overflow-y: auto; /* Cho phép cuộn nội dung bên trong */
+            
+            display: flex; flex-direction: column; align-items: center;
+            animation: fadeIn 1s ease-out; 
+            position: relative;
+        }
+
+        /* Chỉnh typography bên trong Welcome */
+        .wc-title { font-family: 'Great Vibes'; font-size: clamp(2.5rem, 8vw, 3.5rem); margin: 0; color: #ff0055; text-shadow: 0 0 10px #fff; line-height: 1.2; }
+        .wc-class { color: #fff; font-size: clamp(1.5rem, 5vw, 2rem); margin-top: 5px; font-weight: bold; }
+        .wc-subtitle { font-size: clamp(0.9rem, 3vw, 1.3rem); margin: 10px 0; font-weight: bold; color: #ffd700; text-shadow: 1px 1px 5px #000; }
+        
+        .welcome-desc {
+            font-size: 0.95rem; line-height: 1.5; color: #eee; margin: 10px 0; text-align: justify;
+            background: rgba(0, 0, 0, 0.5); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+            width: 100%; box-sizing: border-box;
+        }
+        .admin-email { color: #4fc3f7; font-weight: bold; text-decoration: none; word-break: break-all; } /* Email tự xuống dòng */
+        
+        #start-btn {
+            margin-top: 15px; padding: 12px 40px; 
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
+            background: linear-gradient(45deg, #c0392b, #d35400); color: white; border: none; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 0 20px #ff0000; font-weight: bold; font-family: 'Roboto', sans-serif; 
+            animation: pulse 1.5s infinite; white-space: nowrap;
+        }
+        
+        .note-headphone { color: #ffd700; font-style: italic; margin-top: 15px; font-size: 0.9rem; text-shadow: 1px 1px 5px #000; }
+
+        /* --- MODAL NỘI DUNG LỜI CHÚC --- */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(8px);
+            padding: 10px; box-sizing: border-box;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95); padding: 25px 20px; border-radius: 15px; text-align: center;
+            border: 3px solid #c0392b; box-shadow: 0 0 30px rgba(255,0,85,0.5);
+            transform: scale(0.8); opacity: 0; transition: all 0.3s ease-out;
+            width: 100%; max-width: 500px; max-height: 85vh; 
+            display: flex; flex-direction: column; position: relative;
+        }
+        .modal.active .modal-content { transform: scale(1); opacity: 1; }
+        .close-btn { position: absolute; top: 5px; right: 10px; font-size: 28px; cursor: pointer; color: #555; padding: 5px; z-index: 10; }
+        
+        h2 { margin: 10px 0 5px 0; color: #c0392b; font-family: 'Roboto', sans-serif; font-weight: 700; font-size: clamp(1.4rem, 4vw, 1.8rem); text-transform: uppercase; line-height: 1.2; }
+        .stt-label { font-size: 1rem; color: #666; margin-bottom: 10px; display: block; font-style: italic; }
+        #wish-content-area { overflow-y: auto; flex-grow: 1; padding: 0 5px; margin-bottom: 10px; text-align: center;}
+        
+        .list-item { text-align: left; border-bottom: 1px dashed #ccc; padding: 10px 0; }
+        .list-name { font-weight: bold; color: #c0392b; font-size: 1rem; }
+        .list-wish { font-style: italic; color: #333; margin-top: 3px; font-size: 0.95rem; }
+        .single-wish { 
+            font-size: clamp(1.2rem, 4vw, 1.5rem); 
+            line-height: 1.6; color: #333; font-family: 'Great Vibes', cursive; margin-top: 10px; 
+            word-wrap: break-word;
+        }
+        
+        .instruction { 
+            position: absolute; bottom: 85px; width: 100%; text-align: center; 
+            color: rgba(255,255,255,0.6); font-size: 0.85rem; pointer-events: none; padding: 0 10px;
+        }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tùy chỉnh thanh cuộn đẹp hơn */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c0392b; border-radius: 4px; }
+    </style>
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.159.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/" } }
+    </script>
+</head>
+<body>
+    <audio id="bg-music" loop><source src="noel.mp3" type="audio/mpeg"></audio>
+
+    <div id="welcome-modal">
+        <div class="welcome-content">
+            <h1 class="wc-title">Merry Christmas</h1>
+            <h2 class="wc-class">Lớp 11A4</h2>
+            <p class="wc-subtitle">Chào mừng bạn đến với không gian Giáng Sinh 11A4!</p>
+            
+            <div class="welcome-desc">
+                <p><strong>Dear 11A4,</strong></p>
+                <p>🎁 Web được xây dựng và phát triển để dành tặng tất cả thành viên lớp 11A4.</p>
+                <p>🎁 Số thứ tự thay đổi (25, 27) nên STT của bạn sẽ giảm về 2.</p>
+                <p>⚠️ Website này cố gắng hoàn thiện nhất nên nó khá nặng. Biết rằng các máy cấu hình yếu sẽ gặp khó khăn nhưng mình đã tối ưu trong khả năng. Rất mong bạn truy cập và cho mình ý kiến.</p>
+                <p>🛠️ Web đã mất nhiều thời gian để xây dựng cấu trúc, tuy nhiên vẫn gặp một số vấn đề chưa xử lý hoàn toàn. Nếu lỗi, vui lòng báo cáo admin qua email nhé!</p>
+                <p>📧 Email admin: <span class="admin-email">tranthangg1409@gmail.com</span></p>
+                <p style="margin-top: 10px;"><em>Khả năng mình chỉ tới đây, có gì sai sót mong mọi người bỏ qua. Xin cảm ơn!</em></p>
+                <p style="text-align: center; font-weight: bold; margin-top: 15px; color: #ff6b6b; font-size: 1.1rem;">❤️ Chúc các bạn một mùa Giáng Sinh an lành ❤️</p>
+            </div>
+            
+            <p class="note-headphone">🎧 Đeo tai nghe để có trải nghiệm tốt nhất</p>
+            <button id="start-btn">🎄 NHẤN ĐỂ VÀO TIỆC 🎄</button>
+        </div>
+    </div>
+
+    <div class="title">Merry Christmas 11A4</div>
+    <div id="canvas-container"></div>
+    
+    <div class="instruction">Xoay chuột để ngắm nhìn - Nhấp vào hộp quà để mở!</div>
+
+    <div class="button-container">
+        <button id="slideshow-btn" class="action-btn">▶ Tự Động</button>
+        <button id="shuffle-btn" class="action-btn">🔀 Tráo Đổi</button>
+        <button id="open-all-btn" class="action-btn">🎁 Xem List</button>
+        <button id="music-btn" class="action-btn">🔊 Bật Nhạc</button>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="wisher-name"></h2>
+            <span id="stt-display" class="stt-label"></span>
+            <div id="wish-content-area"></div>
+            <div style="font-size: 30px; margin-top: 10px;">🎅🎁🦌</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { gsap } from 'https://cdn.skypack.dev/gsap';
+
+        const bgMusic = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-btn');
+        const welcomeModal = document.getElementById('welcome-modal');
+        const startBtn = document.getElementById('start-btn');
+        let isMusicPlaying = false;
+
+        function updateMusicButton() { musicBtn.innerText = isMusicPlaying ? "🔊 Tắt Nhạc" : "🔇 Bật Nhạc"; }
+        startBtn.addEventListener('click', () => {
+            welcomeModal.style.opacity = '0';
+            setTimeout(() => { welcomeModal.style.display = 'none'; }, 500);
+            bgMusic.play().then(() => { isMusicPlaying = true; updateMusicButton(); }).catch(e => console.log("Lỗi nhạc:", e));
+        });
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (bgMusic.paused) { bgMusic.play(); isMusicPlaying = true; } else { bgMusic.pause(); isMusicPlaying = false; }
+            updateMusicButton();
+        })
+        const classList = [
+            "Nguyễn Hoàng Thiên Băng Ngôi Sao Trên Đỉnh Cây Thông", "Nguyễn Thị Bảo Cang", "Lê Văn Đông", "Nguyễn Thị Mỹ Hạnh",
+            "Lê Hoàng Phương Hân", "Đinh Lê Thế Hiển", "Lê Thị Thanh Hoa", "Hồ Tống Huy Hoàng",
+            "Bùi Lê Huy", "Nguyễn Cao Khang", "Lê Văn Khuê", "Ksor H' Mai Lan",
+            "Nguyễn Thị Cẩm Linh", "Nguyễn Trọng Như Ngọc", "Lê Trung Nguyên", "Hoàng Thị Yến Nhi",
+            "Phan Hoàng Nhi", "Đặng Thùy Nhiên", "Dương Thi Bích Như", "Đặng Quỳnh Như",
+            "Nguyễn Thị Quỳnh Như", "Hoàng Thanh Phương", "Nguyễn Thị Thanh Phương", "Đặng Thị Hải Quyên",
+            "Tô Nữ Như Quỳnh", "Nguyễn Quốc Tài quần xì", "Lê Trọng Tân", "Ngô Phương Thảo",
+            "Trần Thắng Technology", "Nguyễn Tâm Thật", "Vi Thị Thái Thùy", "Nguyễn Anh Thư",
+            "Trần Tuyết Thy", "Nguyễn Công Trình", "Đoàn Thị Thanh Trúc", "Trần Đức Trung",
+            "Nguyễn Trường Tuân", "Dương Hà Tú Uyên", "Nguyễn Thị Mỹ Uyên", "Nguyễn Quang Vinh"
+        ];
+        const specificWishes = [
+            "Chúc Bạn Thiên Băng giáng sinh an lành và ấm áp, chúc bạn mãi tỏa sáng như ngôi sao trên đỉnh cây thông noel ❤", 
+            "Chúc Bảo Cang luôn xinh đẹp, rạng rỡ và học tập ngày càng tiến bộ nhé!", 
+            "Chúc Văn Đông một mùa Noel thật vui, sớm tìm được 'gấu' để đi chơi nha,bớt loi nhoi là ok!", 
+            "Chúc Mỹ Hạnh luôn học giỏi, đạt điểm cao trong kỳ thi sắp tới!", 
+            "Chúc Phương Hân giáng sinh ấm áp, nhận được thật nhiều quà to!", 
+            "Chúc Thế Hiển leo rank thần tốc, chơi game hay mà học vẫn giỏi!", 
+            "Chúc Thanh Hoa luôn duyên dáng, đáng yêu và gặp nhiều may mắn.", 
+            "Chúc Huy Hoàng luôn đẹp trai, phong độ và thành công trong mọi việc.", 
+            "Chúc Lê Huy một mùa lễ hội tràn ngập tiếng cười và niềm vui.", 
+            "Chúc Cao Khang tiền đầy túi, tình đầy tim, Giáng sinh vui vẻ!", 
+            "Chúc Văn Khuê luôn mạnh khỏe, múa lau hay nhé.", 
+            "Chúc Mai Lan có 1 mùa noel ấm áp giữ vững thành tích, trở thành bác sỹ giỏi.", 
+            "Chúc Cẩm Linh mùa đông không lạnh, luôn có người thương bên cạnh.", 
+            "Chúc Như Ngọc học kỳ này 10 phẩy tất cả các môn nha!", 
+            "Chúc Trung Nguyên vạn sự như ý, tỷ sự như mơ, Giáng sinh an lành.", 
+            "Chúc Yến Nhi luôn vui vẻ, lạc quan và yêu đời như bây giờ.", 
+            "Chúc Phan Hoàng Nhi ngày càng xinh đẹp và thành công rực rỡ.", 
+            "Chúc Thùy Nhiên ăn nhiều không béo, luôn giữ dáng chuẩn nha!", 
+            "Chúc Bích Như Giáng sinh hạnh phúc bên gia đình và bạn bè.", 
+            "Chúc Đặng Quỳnh Như năm mới bứt phá, đạt được mọi mục tiêu.", 
+            "Chúc Nguyễn Thị Quỳnh Như luôn là cô gái ngọt ngào và đáng yêu nhất.", 
+            "Chúc H Thanh Phương luôn tự tin, tỏa sáng và gặp nhiều điều tốt lành.", 
+            "Chúc Nguyễn Thị Thanh Phương một mùa Noel ấm áp yêu thương.", 
+            "Chúc Hải Quyên luôn rạng rỡ nụ cười trên môi mỗi ngày.", 
+            "Chúc Như Quỳnh học giỏi, chăm ngoan và được mọi người yêu mến.", 
+            "Chúc Quốc Tài quần xì học giỏi toán, đạt thành tích cao sau này còn chỉ tao giải tích ngu nhu con cu.", 
+            "Chúc Trọng Tân có một Giáng sinh đáng nhớ với thật nhiều kỷ niệm đẹp.", 
+            "Chúc Phương Thảo xinh xắn như công chúa trong đêm Giáng sinh.", 
+            "NO VALUE!", 
+            "Chúc Tâm Thật luôn chân thành, vui vẻ và được mọi người quý mến.", 
+            "Chúc Thái Thùy một mùa lễ hội lung linh sắc màu và ngập tràn hạnh phúc.", 
+            "Chúc Anh Thư học tập tấn tới, tương lai rộng mở thênh thang.", 
+            "Chúc Tuyết Thy luôn dịu dàng, dễ thương và may mắn ngập tràn.", 
+            "Chúc Công Trình cá trình mạnh mẽ, ga lăng và đạt nhiều thành tích tốt,bạn tôi ơi, chúc bạn trở thành bác sỹ đại tài nhé.", 
+            "Chúc Thanh Trúc luôn tươi vui như hoa nở mùa xuân.", 
+            "Chúc Đức Trung thông minh, lanh lợi và luôn dẫn đầu trong lớp.", 
+            "Chúc Trường Tuân ido có ngày lễ vui nhé.", 
+            "Chúc Tú Uyên luôn xinh đẹp, giỏi giang và được crush đáp lại nhé!", 
+            "Chúc Mỹ Uyên một mùa Giáng sinh an lành, vạn sự bình an.", 
+            "Chúc Quang Vinh năm mới rực rỡ, thành công nối tiếp thành công!" 
+        ];
+
+        let isShuffled = false; 
+        let giftMapping = Array.from({ length: 41 }, (_, i) => i); 
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.02);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 15);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.1; controls.minDistance = 5; controls.maxDistance = 30;
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 2); scene.add(ambientLight);
+        const mainLight = new THREE.PointLight(0xffd700, 3, 50); mainLight.position.set(0, 10, 0); mainLight.castShadow = true; scene.add(mainLight);
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }));
+        ground.rotation.x = -Math.PI / 2; ground.position.y = -0.1; ground.receiveShadow = true; scene.add(ground);
+
+        const treeGroup = new THREE.Group();
+        const treeMat = new THREE.MeshStandardMaterial({ color: 0x0f5e2f, flatShading: true });
+        [ [3.5,3,1.5], [2.8,2.5,3.5], [2.0,2,5.2], [1.2,1.5,6.7] ].forEach(p => {
+            const m = new THREE.Mesh(new THREE.ConeGeometry(p[0],p[1],16), treeMat);
+            m.position.y = p[2]; m.castShadow = true; m.receiveShadow = true; treeGroup.add(m);
+        });
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,2,12), new THREE.MeshStandardMaterial({color: 0x4e342e}));
+        trunk.position.y=1; trunk.castShadow=true; treeGroup.add(trunk);
+        const star = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6,0), new THREE.MeshBasicMaterial({color:0xffff00}));
+        star.position.y=7.8; treeGroup.add(star);
+        const starLight = new THREE.PointLight(0xffff00, 2, 10); starLight.position.copy(star.position); treeGroup.add(starLight);
+        scene.add(treeGroup);
+
+        const lightsGroup = new THREE.Group();
+        const lCols = [0xff0000, 0xffff00, 0x0000ff, 0xff00ff];
+        for (let i=0; i<100; i++) {
+            const c = lCols[Math.floor(Math.random()*lCols.length)];
+            const m = new THREE.Mesh(new THREE.SphereGeometry(0.08,8,8), new THREE.MeshBasicMaterial({color:c}));
+            const th = Math.random()*Math.PI*2, y = Math.random()*5+2, r = (1-(y-2)/5.5)*3.2+0.1;
+            m.position.set(r*Math.cos(th), y, r*Math.sin(th));
+            const l = new THREE.PointLight(c, 0.5, 2); l.position.copy(m.position);
+            lightsGroup.add(l); lightsGroup.add(m);
+            m.userData = {baseColor: new THREE.Color(c), phase: Math.random()*Math.PI*2, speed: 0.5+Math.random()};
+        }
+        treeGroup.add(lightsGroup);
+
+        function createGiftTexture(text, colorHex) {
+            const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#' + colorHex.toString(16).padStart(6, '0'); ctx.fillRect(0, 0, 256, 256);
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 20; ctx.strokeRect(0, 0, 256, 256);
+            ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.font = text === "AD" ? 'bold 100px Arial' : 'bold 120px Arial';
+            ctx.fillText(text, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const giftsGroup = new THREE.Group();
+        const giftMeshes = [];
+        const totalGifts = 41;
+        for (let i=0; i<totalGifts; i++) {
+            const size = 0.6 + Math.random()*0.4;
+            const cols = [0xd32f2f, 0x1976d2, 0x388e3c, 0x8e24aa, 0xf57c00];
+            let c = cols[Math.floor(Math.random()*cols.length)], lbl = i<40 ? i+1 : "AD";
+            if (i>=40) c = 0x333333;
+            const g = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), new THREE.MeshStandardMaterial({map:createGiftTexture(lbl,c), roughness:0.3}));
+            const ang = (i/totalGifts)*Math.PI*2, rad = 4+Math.random()*3.5;
+            g.position.set(Math.cos(ang)*rad, size/2, Math.sin(ang)*rad);
+            g.rotation.y = Math.random()*Math.PI; g.castShadow=true; g.receiveShadow=true;
+            g.userData = {id:i, label:lbl, isGift:true};
+            giftsGroup.add(g); giftMeshes.push(g);
+        }
+        scene.add(giftsGroup);
+
+        const snowGeo = new THREE.BufferGeometry();
+        const snowCount = 2000; const snowPos = new Float32Array(snowCount*3); const snowVel = [];
+        for (let i=0; i<snowCount; i++) {
+            snowPos[i*3] = (Math.random()-0.5)*50; snowPos[i*3+1] = Math.random()*30+10; snowPos[i*3+2] = (Math.random()-0.5)*50;
+            snowVel.push(0.05 + Math.random()*0.1);
+        }
+        snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos,3));
+        const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({color:0xffffff, size:0.2, transparent:true, opacity:0.8}));
+        scene.add(snow);
+
+        const modal = document.getElementById('modal');
+        const wisherName = document.getElementById('wisher-name');
+        const sttDisplay = document.getElementById('stt-display');
+        const wishContentArea = document.getElementById('wish-content-area');
+        const closeBtn = document.querySelector('.close-btn');
+        const openAllBtn = document.getElementById('open-all-btn');
+        const slideshowBtn = document.getElementById('slideshow-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        
+        let slideshowInterval;
+        let isSlideshowActive = false;
+
+        function showGiftContent(object) {
+            const boxId = object.userData.id;
+            const mappedIndex = giftMapping[boxId]; 
+            let wishHTML = "";
+            if (mappedIndex === 40) {
+                wisherName.innerText = "Cô Trần Thị Như"; sttDisplay.innerText = "Giáo Viên Chủ Nhiệm";
+                wishHTML = `<p class="single-wish">Chúc Cô Như một mùa giáng sinh vui vẻ mãi là sếp của A4 !</p>`;
+            } else {
+                const studentIndex = mappedIndex;
+                if (studentIndex >= 0 && studentIndex < classList.length) {
+                    wisherName.innerText = classList[studentIndex];
+                    sttDisplay.innerText = `Thành viên số #${studentIndex + 1}`; 
+                    wishHTML = `<p class="single-wish">${specificWishes[studentIndex]}</p>`;
+                }
+            }
+            wishContentArea.innerHTML = wishHTML;
+        }
+
+        let isIntroPlayed = false;
+        let introGroup = new THREE.Group(); 
+        scene.add(introGroup);
+        let introGift = null;
+        let drawingTree = null; 
+
+        function createIntroGift() {
+            const size = 3;
+            const geometry = new THREE.BoxGeometry(size, size, size);
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ff0000'; ctx.fillRect(0,0,512,512);
+            ctx.fillStyle = '#ffd700'; ctx.fillRect(200,0,112,512); ctx.fillRect(0,200,512,112); // Ribbon
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.MeshStandardMaterial({ map: tex });
+            introGift = new THREE.Mesh(geometry, mat);
+            introGift.position.set(0, -5, 10); 
+            introGift.castShadow = true;
+            introGroup.add(introGift);
+        }
+        createIntroGift();
+
+        function createDrawingTree() {
+            const particleCount = 1500;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            
+            for(let i=0; i<particleCount; i++) {
+                const t = i / particleCount;
+                const angle = t * Math.PI * 20; 
+                const radius = 5 * (1 - t);
+                const height = t * 10; 
+
+                positions[i*3] = Math.cos(angle) * radius;
+                positions[i*3+1] = height;
+                positions[i*3+2] = Math.sin(angle) * radius;
+
+                const c = new THREE.Color();
+                c.setHSL(t * 0.3, 1.0, 0.5); 
+                colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            geometry.setDrawRange(0, 0);
+
+            const material = new THREE.PointsMaterial({
+                size: 0.2, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.8
+            });
+
+            drawingTree = new THREE.Points(geometry, material);
+            drawingTree.position.set(0, 0, 10);
+            introGroup.add(drawingTree);
+            return { mesh: drawingTree, geometry: geometry, count: particleCount };
+        }
+
+        slideshowBtn.addEventListener('click', () => {
+            if (modal.style.display === 'flex') return;
+            if (isSlideshowActive) return; 
+
+            isSlideshowActive = true;
+            
+            if (!isIntroPlayed) {
+                playIntroSequence();
+            } else {
+                playLoop();
+            }
+        });
+
+        function playIntroSequence() {
+            gsap.to(camera.position, { x: 0, y: 5, z: 25, duration: 1.5 });
+            
+            introGift.position.y = -5;
+            introGift.scale.set(1,1,1);
+            introGift.visible = true;
+            gsap.to(introGift.position, { y: 1.5, duration: 1, ease: "back.out(1.2)", onComplete: () => {
+                
+                gsap.to(introGift.scale, { x: 2, y: 2, z: 2, duration: 0.5, opacity: 0 });
+                gsap.to(introGift.rotation, { y: Math.PI, duration: 0.5 });
+                setTimeout(() => { introGift.visible = false; }, 500);
+
+                const treeObj = createDrawingTree();
+                const drawState = { val: 0 };
+                
+                gsap.to(drawState, { val: treeObj.count, duration: 4, ease: "linear", onUpdate: () => {
+                    treeObj.geometry.setDrawRange(0, Math.floor(drawState.val));
+                }, onComplete: () => {
+                    const sGeo = new THREE.IcosahedronGeometry(0.8, 0);
+                    const sMat = new THREE.MeshBasicMaterial({color: 0xffff00});
+                    const bigStar = new THREE.Mesh(sGeo, sMat);
+                    bigStar.position.set(0, 10, 0); 
+                    drawingTree.add(bigStar);
+                    
+                    gsap.to(drawingTree.rotation, { y: Math.PI*2, duration: 3, repeat: -1, ease: "linear" });
+
+                    setTimeout(() => {
+                        gsap.to(introGroup.position, { y: 10, opacity: 0, duration: 1, onComplete: () => {
+                            introGroup.visible = false;
+                            isIntroPlayed = true; 
+                            
+                            gsap.to(camera.position, { x: 0, y: 5, z: 15, duration: 1.5 });
+                            
+                            playLoop();
+                        }});
+                    }, 2000);
+                }});
+            }});
+        }
+
+        let loopIndex = 0;
+        function playLoop() {
+            if (!isSlideshowActive) return;
+            if (loopIndex >= totalGifts) { isSlideshowActive = false; return; }
+
+            const object = giftMeshes[loopIndex];
+            const originalY = object.position.y;
+            
+            gsap.to(object.position, { y: originalY + 2, duration: 0.5, yoyo: true, repeat: 1 });
+            gsap.to(object.rotation, { y: object.rotation.y + Math.PI, duration: 0.5 });
+            
+            showGiftContent(object);
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+
+            slideshowInterval = setTimeout(() => {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    loopIndex++;
+                    if(isSlideshowActive) playLoop();
+                }, 300);
+            }, 5000); 
+        }
+
+        const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
+        window.addEventListener('click', (event) => {
+            if (modal.style.display === 'flex' || welcomeModal.style.display !== 'none' || event.target.tagName === 'BUTTON') return;
+            mouse.x = (event.clientX / window.innerWidth)*2-1; mouse.y = -(event.clientY / window.innerHeight)*2+1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(giftMeshes);
+            if (intersects.length > 0) {
+                const object = intersects[0].object;
+                if (object.userData.isGift) {
+                    gsap.to(object.position, {y: object.position.y+1, duration: 0.3, yoyo:true, repeat:1});
+                    showGiftContent(object);
+                    setTimeout(()=>{modal.style.display='flex'; setTimeout(()=>modal.classList.add('active'),10);}, 300);
+                }
+            }
+        });
+
+        shuffleBtn.addEventListener('click', () => {
+            isShuffled = !isShuffled; 
+            if (isShuffled) {
+                shuffleBtn.innerText = "🔄 Về Mặc Định"; shuffleBtn.style.background = "linear-gradient(45deg, #e67e22, #f39c12)";
+                for (let i=giftMapping.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [giftMapping[i],giftMapping[j]]=[giftMapping[j],giftMapping[i]]; }
+                giftMeshes.forEach((g,i) => { gsap.to(g.rotation, {y:g.rotation.y+Math.PI, duration:0.5, delay:i*0.02}); });
+            } else {
+                shuffleBtn.innerText = "🔀 Tráo Đổi"; shuffleBtn.style.background = "linear-gradient(45deg, #8e44ad, #9b59b6)";
+                giftMapping = Array.from({length:41},(_,i)=>i);
+                giftMeshes.forEach((g,i) => { gsap.to(g.rotation, {y:g.rotation.y-Math.PI, duration:0.5, delay:i*0.02}); });
+            }
+        });
+
+        openAllBtn.addEventListener('click', () => {
+            if (modal.style.display === 'flex') return; isSlideshowActive = false; 
+            giftMeshes.forEach((g,i) => {
+                gsap.to(g.position, {y:g.position.y+2, duration:0.5, yoyo:true, repeat:1, delay:i*0.05});
+                gsap.to(g.rotation, {y:g.rotation.y+Math.PI*2, duration:0.5, delay:i*0.05});
+            });
+            wisherName.innerText = "DANH SÁCH LỜI CHÚC 11A4"; sttDisplay.innerText = "Chúc Mừng Giáng Sinh & Năm Mới";
+            let h = `<div class="list-item" style="background:#fff0f5;padding:10px;"><div class="list-name">👑 Cô Trần Thị Như (GVCN)</div><div class="list-wish">Chúc Cô Như một mùa giáng sinh vui vẻ mãi là sếp của A4 !</div></div>`;
+            classList.forEach((n,i) => { h += `<div class="list-item"><div class="list-name">#${i+1}. ${n}</div><div class="list-wish">${specificWishes[i]}</div></div>`; });
+            wishContentArea.innerHTML = h;
+            setTimeout(()=>{modal.style.display='flex';setTimeout(()=>modal.classList.add('active'),10);}, 1500);
+        });
+
+        closeBtn.onclick = () => {
+            isSlideshowActive = false; clearTimeout(slideshowInterval);
+            modal.classList.remove('active'); setTimeout(()=>modal.style.display='none', 300);
+        };
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+            controls.update();
+            treeGroup.rotation.y = time * 0.1;
+            lightsGroup.children.forEach(child => {
+                if (child.isMesh) child.material.color.lerpColors(child.userData.baseColor, new THREE.Color(0xffffff), (Math.sin(time * child.userData.speed + child.userData.phase)+1)/2 * 0.5);
+            });
+            const pos = snow.geometry.attributes.position.array;
+            for(let i=0; i<snowCount; i++) {
+                pos[i*3+1] -= snowVel[i];
+                if(pos[i*3+1]<0) pos[i*3+1] = 30 + Math.random()*10;
+            }
+            snow.geometry.attributes.position.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+        animate();
+    </script>
+</body>
+</html>
